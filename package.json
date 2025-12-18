@@ -1,0 +1,12 @@
+{
+  "name": "work-reminder",
+  "version": "1.0.0",
+  "description": "Reminds every hour to write in what you did",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
