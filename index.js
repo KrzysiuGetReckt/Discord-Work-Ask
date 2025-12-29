@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, Events, Partials } = require('discord.js');
-const { Events } = require('discord.js');
 // Helper functions
 const { isWithinWorkingHours, sleep } = require('./helperFunctions/isWithinWorkingHours');
 const { parseWorkMessage } = require('./helperFunctions/parseWorkMessage');
@@ -26,49 +25,50 @@ const {
   DM_DELAY_MS
 } = process.env;
 
-lastRun = 0;
+let guild; // keep reference
 
 client.once(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  lastRun = Date.now();
+  guild = await client.guilds.fetch(GUILD_ID);
+  await guild.members.fetch(); // cache all members
 
-  setInterval(async() => {
-    if (Date.now() - lastRun >= INTERVAL_MS) return;
-    lastRun = Date.now();
-
-        const guild = await client.guilds.fetch(GUILD_ID);
-        await guild.members.fetch(); // Cache all members
-
-        setInterval(async () => {
-            if (!isWithinWorkingHours()) {
-            console.log('Outside working hours. Skipping DM send.');
-            return;
-            }
-
-            console.log('Sending scheduled DMs...');
-
-            const role = guild.roles.cache.get(ROLE_ID);
-            if (!role) return console.error('Role not found');
-
-            for (const member of role.members.values()) {
-            if (member.user.bot) continue;
-
-            try {
-                await member.send(
-                `Hey ${member.user.username}! Pamiętaj o wpisaniu godzin do Raportu!.
-                Możesz to zrobić za pomocą komendy /raport lub bezpośrednio na teams!.`
-                );
-                console.log(`DM sent to ${member.user.tag}`);
-                await sleep(Number(DM_DELAY_MS)); 
-            } catch (err) {
-                console.error(`Failed to DM ${member.user.tag}`);
-                await sleep(Number(DM_DELAY_MS)); 
-            }
-            }
-        }, Number(INTERVAL_MS));
-  }, 30_000); // Check every 30 seconds
+  setInterval(runScheduledDMs, Number(INTERVAL_MS));
 });
+
+async function runScheduledDMs() {
+  if (!isWithinWorkingHours()) {
+    console.log('Outside working hours. Skipping DM send.');
+    return;
+  }
+
+  console.log('Sending scheduled DMs...');
+
+  const role = guild.roles.cache.get(ROLE_ID);
+  if (!role) return console.error('Role not found');
+
+  for (const member of role.members.values()) {
+    if (member.user.bot) continue;
+
+    try {
+      await member.send(
+        `Hej ${member.user.username}!
+Pamiętaj o wpisaniu godzin do Raportu!
+Możesz to zrobić odpowiadając mi na tym czatcie!
+Format:
+Os. Wyk. | Data | Rodzaj Usługi | Nazwa Zadania | Osoba zlecająca | Klient/Projekt | Dział IT | Czas.`
+      );
+
+      console.log(`DM sent to ${member.user.tag}`);
+    } catch (err) {
+      console.error(`Failed to DM ${member.user.tag}:`, err.message);
+    }
+
+    // throttle to avoid rate limits
+    await sleep(Number(DM_DELAY_MS));
+  }
+}
+
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;

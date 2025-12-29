@@ -17,7 +17,7 @@ function getCETHour() {
 }
 
 function isWithinWorkingHours() {
-    const hour = getCETHour;
+    const hour = getCETHour();
     return hour >= WORK_START_HOUR && hour < WORK_END_HOUR;
 }
 
