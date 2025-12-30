@@ -3,7 +3,8 @@ const { Client, GatewayIntentBits, Events, Partials } = require('discord.js');
 // Helper functions
 const { isWithinWorkingHours, sleep } = require('./helperFunctions/isWithinWorkingHours');
 const { parseWorkMessage } = require('./helperFunctions/parseWorkMessage');
-const { updateExcelFile } = require('./helperFunctions/updateExcelFile');
+const { updateExcelFile, zipDailyReports } = require('./helperFunctions/updateExcelFile');
+const cron = require('node-cron');
 
 
 const client = new Client({
@@ -22,7 +23,8 @@ const {
   INTERVAL_MS,
   GUILD_ID,
   ROLE_ID,
-  DM_DELAY_MS
+  DM_DELAY_MS,
+  REPORT_USER_ID
 } = process.env;
 
 let guild; // keep reference
@@ -69,12 +71,26 @@ Os. Wyk. | Data | Rodzaj Usługi | Nazwa Zadania | Osoba zlecająca | Klient/Pro
   }
 }
 
-
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (message.guild)    return; // Only process DMs
 
   const parsed = parseWorkMessage(message.content);
+  const content = message.content.trim().toLowerCase();
+
+  if (content === 'pokaż raport') {
+    try {
+        const filePath = await updateExcelFile(message.author, null, true);
+
+        await message.reply({ 
+            content: 'Oto Twój aktualny raport.', files: [filePath] 
+        });
+    } catch (err) {
+        console.error('Error fetching Excel file:', err);
+        await message.reply('Wystąpił błąd podczas pobierania raportu. Proszę spróbuj ponownie później.');
+    }
+    return;
+  }
 
     if (!parsed) {
         await message.reply('Niepoprawny format wiadomości. Użyj formatu: Data | Rodzaj Usługi | Nazwa Zadania | Osoba zlecająca | Klient/Projekt | Dział IT | Czas');
@@ -99,6 +115,25 @@ client.on('messageCreate', async (message) => {
         console.error('Error updating Excel file:', err);
         await message.reply('Wystąpił błąd podczas aktualizacji raportu. Proszę spróbuj ponownie później.');
     }
+});
+
+cron.schedule('0 16 * * 1-5', async () => {
+  const date = new Date().toISOString().slice(0, 10);
+
+  try {
+    const supervisor = await client.users.fetch(REPORT_USER_ID);
+
+    const zipPath = await zipDailyReports(date);
+
+    await supervisor.send({ 
+      content: `Dzienny raport za dzień ${date}`, 
+      files: [zipPath] 
+    });
+
+    console.log(`Daily report for ${date} sent to supervisor.`);
+  } catch (err) {
+    console.error('Error sending daily report:', err);
+  }
 });
 
 client.login(DISCORD_TOKEN);
