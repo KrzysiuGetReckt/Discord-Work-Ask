@@ -6,7 +6,6 @@ const { parseWorkMessage } = require('./helperFunctions/parseWorkMessage');
 const { updateExcelFile, zipDailyReports } = require('./helperFunctions/updateExcelFile');
 const cron = require('node-cron');
 
-
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -57,8 +56,9 @@ async function runScheduledDMs() {
         `Hej ${member.user.username}!
 Pamiętaj o wpisaniu godzin do Raportu!
 Możesz to zrobić odpowiadając mi na tym czatcie!
-Format:
-Os. Wyk. | Data | Rodzaj Usługi | Nazwa Zadania | Osoba zlecająca | Klient/Projekt | Dział IT | Czas.`
+Format wiadomości: 
+Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
+*pola wymagane`
       );
 
       console.log(`📧 DM sent to ${member.user.tag}`);
@@ -93,17 +93,19 @@ client.on('messageCreate', async (message) => {
   }
 
     if (!parsed) {
-        await message.reply('Niepoprawny format wiadomości. Użyj formatu: Data | Rodzaj Usługi | Nazwa Zadania | Osoba zlecająca | Klient/Projekt | Dział IT | Czas');
+        await message.reply(`Niepoprawny format wiadomości. 
+Użyj Formatu: 
+Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
+*pola wymagane`);
         return;
     }
-    await message.reply(`Dziękuję za zgłoszenie! Oto podsumowanie Twojego wpisu:\n
-        Data: ${parsed.date}\n
-        Rodzaj Usługi: ${parsed.service}\n
-        Nazwa Zadania: ${parsed.task}\n
-        Osoba zlecająca: ${parsed.ordering}\n
-        Klient/Projekt: ${parsed.client}\n
-        Dział IT: ${parsed.it}\n
-        Czas: ${parsed.time}`);
+    await message.reply(`Dziękuję za zgłoszenie! Oto podsumowanie:\n
+        Data: ${parsed.date}
+        Nazwa Zadania: ${parsed.task}
+        Klient / Projekt: ${parsed.client}
+        Czas: ${parsed.time}
+        Km: ${parsed.km}
+        Nr. Rejestracji ${parsed.registration}`);
     
     try {
         const filePath = await updateExcelFile(message.author, parsed);

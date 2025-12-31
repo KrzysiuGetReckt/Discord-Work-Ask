@@ -39,7 +39,9 @@ async function updateExcelFile(user, entry = null, options = {}) {
             'Osoba zlecająca',
             'Klient/Projekt',
             'Dział IT',
-            'Czas'
+            'Czas',
+            'KM',
+            'Nr. Rejestracji'
         ]);
     }
 
@@ -53,7 +55,9 @@ async function updateExcelFile(user, entry = null, options = {}) {
             entry.ordering,
             entry.client,
             entry.it,
-            entry.time
+            entry.time,
+            entry.km,
+            entry.registration
         ]);
     }
 

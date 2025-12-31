@@ -1,28 +1,34 @@
 function parseWorkMessage(content) {
-    const parts = content.split('|').map(part => part.trim());
+    const parts = content.split('/').map(part => part.trim());
 
     const [
         date,
-        service,
         task,
-        ordering,
         client,
-        it,
-        time
+        time,
+        km,
+        registration
     ] = parts;
 
-    if (!task || !time) {
+    if (!task || !client || !time) {
         return null;
     }
 
     return {
         date: date || new Date().toISOString().slice(0, 10),
-        service: service || '',
-        task: task,
-        ordering: ordering || '',
-        client: client || '',
-        it: it,
-        time: time
+
+        // leave unused Excel columns empty
+        service: null,
+        ordering: null,
+        it: null,
+
+        // requested fields
+        task,
+        client,
+        time,
+
+        km: km || null,
+        registration: registration || null
     };
 }
 
