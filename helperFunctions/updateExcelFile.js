@@ -11,14 +11,13 @@ async function updateExcelFile(user, entry = null, options = {}) {
     const { noAppend = false } = options;
     const today = new Date().toISOString().slice(0, 10);
 
-    const reportsDir = path.join(__dirname, folderName, today);
+    const reportsDir = path.join(process.cwd(), folderName, today);
 
     if (!fs.existsSync(reportsDir)) {
         fs.mkdirSync(reportsDir, { recursive: true });
     }
 
-    const fileName = `${user.username}-${today}.xlsx`;
-    const filePath = path.join(reportsDir, fileName);
+    const filePath = path.join(reportsDir, `${user.username}-${today}.xlsx`);
 
     const workbook = new ExcelJS.Workbook();
     let sheet;
@@ -66,8 +65,8 @@ async function updateExcelFile(user, entry = null, options = {}) {
 }
 
 async function zipDailyReports(date) {
-    const reportsDir = path.join(__dirname, folderName, date);
-    const zipPath = path.join(__dirname, folderName, `reports_${date}.zip`);
+    const reportsDir = path.join(process.cwd(), folderName, date);
+    const zipPath = path.join(process.cwd(), folderName, `reports_${date}.zip`);
 
     if (!fs.existsSync(reportsDir)) {
         throw new Error('No reports found for the specified date.');
