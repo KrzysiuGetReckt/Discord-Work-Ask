@@ -30,7 +30,7 @@ const {
 let guild; // keep reference
 
 client.once(Events.ClientReady, async () => {
-  console.log(`Logged in as ${client.user.tag}`);
+  console.log(`🤖 Logged in as ${client.user.tag}`);
 
   guild = await client.guilds.fetch(GUILD_ID);
   await guild.members.fetch(); // cache all members
@@ -44,10 +44,10 @@ async function runScheduledDMs() {
     return;
   }
 
-  console.log('Sending scheduled DMs...');
+  console.log('📧 Sending scheduled DMs...');
 
   const role = guild.roles.cache.get(ROLE_ID);
-  if (!role) return console.error('Role not found');
+  if (!role) return console.error('❌ Role not found');
 
   for (const member of role.members.values()) {
     if (member.user.bot) continue;
@@ -61,9 +61,9 @@ Format:
 Os. Wyk. | Data | Rodzaj Usługi | Nazwa Zadania | Osoba zlecająca | Klient/Projekt | Dział IT | Czas.`
       );
 
-      console.log(`DM sent to ${member.user.tag}`);
+      console.log(`📧 DM sent to ${member.user.tag}`);
     } catch (err) {
-      console.error(`Failed to DM ${member.user.tag}:`, err.message);
+      console.error(`❌ Failed to DM ${member.user.tag}:`, err.message);
     }
 
     // throttle to avoid rate limits
@@ -86,7 +86,7 @@ client.on('messageCreate', async (message) => {
             content: 'Oto Twój aktualny raport.', files: [filePath] 
         });
     } catch (err) {
-        console.error('Error fetching Excel file:', err);
+        console.error('❌ Error fetching Excel file:', err);
         await message.reply('Wystąpił błąd podczas pobierania raportu. Proszę spróbuj ponownie później.');
     }
     return;
@@ -112,7 +112,7 @@ client.on('messageCreate', async (message) => {
             content: 'Twój raport został zaktualizowany.', files: [filePath] 
         });
     } catch (err) {
-        console.error('Error updating Excel file:', err);
+        console.error('❌ Error updating Excel file:', err);
         await message.reply('Wystąpił błąd podczas aktualizacji raportu. Proszę spróbuj ponownie później.');
     }
 });
@@ -130,9 +130,9 @@ cron.schedule('0 16 * * 1-5', async () => {
       files: [zipPath] 
     });
 
-    console.log(`Daily report for ${date} sent to supervisor.`);
+    console.log(`✅ Daily report for ${date} sent to supervisor.`);
   } catch (err) {
-    console.error('Error sending daily report:', err);
+    console.error('❌ Error sending daily report:', err);
   }
 });
 
