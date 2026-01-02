@@ -5,6 +5,7 @@ const { isWithinWorkingHours, sleep } = require('./helperFunctions/isWithinWorki
 const { parseWorkMessage } = require('./helperFunctions/parseWorkMessage');
 const { updateExcelFile, zipDailyReports } = require('./helperFunctions/updateExcelFile');
 const cron = require('node-cron');
+const logger = require("./winston/winstonSetup");
 
 const client = new Client({
   intents: [
@@ -29,7 +30,7 @@ const {
 let guild; // keep reference
 
 client.once(Events.ClientReady, async () => {
-  console.log(`🤖 Logged in as ${client.user.tag}`);
+  logger.info(`🤖 Logged in as ${client.user.tag}`);
 
   guild = await client.guilds.fetch(GUILD_ID);
   await guild.members.fetch(); // cache all members
@@ -39,14 +40,14 @@ client.once(Events.ClientReady, async () => {
 
 async function runScheduledDMs() {
   if (!isWithinWorkingHours()) {
-    console.log('Outside working hours. Skipping DM send.');
+    logger.info('Outside working hours. Skipping DM send.');
     return;
   }
 
-  console.log('📧 Sending scheduled DMs...');
+  logger.info('📧 Sending scheduled DMs...');
 
   const role = await guild.roles.fetch(ROLE_ID);
-  if (!role) return console.error('❌ Role not found');
+  if (!role) return logger.error('❌ Role not found');
 
   for (const member of role.members.values()) {
     if (member.user.bot) continue;
@@ -61,9 +62,9 @@ Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
 *pola wymagane`
       );
 
-      console.log(`📧 DM sent to ${member.user.tag}`);
+      logger.info(`📧 DM sent to ${member.user.tag}`);
     } catch (err) {
-      console.error(`❌ Failed to DM ${member.user.tag}:`, err.message);
+      logger.error(`❌ Failed to DM ${member.user.tag}:`, err.message);
     }
 
     // throttle to avoid rate limits
@@ -86,7 +87,7 @@ client.on('messageCreate', async (message) => {
             content: 'Oto Twój aktualny raport.', files: [filePath] 
         });
     } catch (err) {
-        console.error('❌ Error fetching Excel file:', err);
+        logger.error('❌ Error fetching Excel file:', err);
         await message.reply('Wystąpił błąd podczas pobierania raportu. Proszę spróbuj ponownie później.');
     }
     return;
@@ -114,7 +115,7 @@ Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
             content: 'Twój raport został zaktualizowany.', files: [filePath] 
         });
     } catch (err) {
-        console.error('❌ Error updating Excel file:', err);
+        logger.error('❌ Error updating Excel file:', err);
         await message.reply('Wystąpił błąd podczas aktualizacji raportu. Proszę spróbuj ponownie później.');
     }
 });
@@ -132,10 +133,18 @@ cron.schedule('0 16 * * 1-5', async () => {
       files: [zipPath] 
     });
 
-    console.log(`✅ Daily report for ${date} sent to supervisor.`);
+    logger.info(`✅ Daily report for ${date} sent to supervisor.`);
   } catch (err) {
-    console.error('❌ Error sending daily report:', err);
+    logger.error('❌ Error sending daily report:', err);
   }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
 });
 
 client.login(DISCORD_TOKEN);
