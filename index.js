@@ -45,7 +45,7 @@ async function runScheduledDMs() {
 
   console.log('📧 Sending scheduled DMs...');
 
-  const role = await guild.role.fetch(ROLE_ID);
+  const role = await guild.roles.fetch(ROLE_ID);
   if (!role) return console.error('❌ Role not found');
 
   for (const member of role.members.values()) {
