@@ -70,7 +70,7 @@ async function runScheduledDMs() {
 Pamiętaj o wpisaniu godzin do Raportu!
 Możesz to zrobić odpowiadając mi na tym czatcie!
 Format wiadomości: 
-Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
+Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
 *pola wymagane`
       );
 
@@ -121,10 +121,18 @@ client.on('messageCreate', async (message) => {
     if (!parsed) {
         await message.reply(`Niepoprawny format wiadomości. 
 Użyj Formatu: 
-Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
+Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
 *pola wymagane`);
         return;
     }
+
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+
+    parsed.date = `${day}.${month}.${year}`;
+
     await message.reply(`Dziękuję za zgłoszenie! Oto podsumowanie:\n
         Data: ${parsed.date}
         Nazwa Zadania: ${parsed.task}
@@ -132,7 +140,7 @@ Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
         Czas: ${parsed.time}
         Km: ${parsed.km}
         Nr. Rejestracji ${parsed.registration}`);
-    
+
     try {
         const filePath = await updateExcelFile(member, parsed);
 
