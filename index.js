@@ -103,20 +103,6 @@ client.on('messageCreate', async (message) => {
   }
 
   const parsed = parseWorkMessage(message.content);
-  const content = message.content.trim().toLowerCase();
-
-  if (content === 'pokaż raport') {
-    try {
-        const filePath = await updateExcelFile(member, null, { noAppend: true });
-        await message.reply({ 
-            content: 'Oto Twój aktualny raport.', files: [filePath] 
-        });
-    } catch (err) {
-        logger.error('❌ Error fetching Excel file:', err);
-        await message.reply('Wystąpił błąd podczas pobierania raportu. Proszę spróbuj ponownie później.');
-    }
-    return;
-  }
 
     if (!parsed) {
         await message.reply(`Niepoprawny format wiadomości. 
