@@ -17,7 +17,8 @@ async function updateExcelFile(user, entry = null, options = {}) {
         fs.mkdirSync(reportsDir, { recursive: true });
     }
 
-    const filePath = path.join(reportsDir, `${user.username}-${today}.xlsx`);
+    const displayName = user.displayName || user.username;
+    const filePath = path.join(reportsDir, `${displayName}-${today}.xlsx`);
 
     const workbook = new ExcelJS.Workbook();
     let sheet;

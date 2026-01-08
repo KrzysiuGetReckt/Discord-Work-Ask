@@ -32,8 +32,20 @@ let guild; // keep reference
 client.once(Events.ClientReady, async () => {
   logger.info(`🤖 Logged in as ${client.user.tag}`);
 
-  guild = await client.guilds.fetch(GUILD_ID);
-  await guild.members.fetch(); // cache all members
+  // Use cache instead of fetching guild (avoids partials issues)
+  guild = client.guilds.cache.get(GUILD_ID);
+  if (!guild) {
+    logger.error(`❌ Guild with ID ${GUILD_ID} not found in cache`);
+    return;
+  }
+
+  try {
+    // Fetch all members from Discord (ensure full cache)
+    await guild.members.fetch({ force: true });
+    logger.info(`✅ All members fetched for guild ${guild.name}`);
+  } catch (err) {
+    logger.error('❌ Error fetching all members:', err);
+  }
 
   setInterval(runScheduledDMs, Number(INTERVAL_MS));
 });
@@ -54,7 +66,7 @@ async function runScheduledDMs() {
 
     try {
       await member.send(
-        `Hej ${member.user.username}!
+        `Hej ${member.displayName}!
 Pamiętaj o wpisaniu godzin do Raportu!
 Możesz to zrobić odpowiadając mi na tym czatcie!
 Format wiadomości: 
@@ -75,14 +87,27 @@ Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (message.guild)    return; // Only process DMs
+  
+  let member;
+  let displayName;
+
+  try {
+      member = await guild.members.fetch(message.author.id);
+      displayName = member.displayName; // nickname or username
+      logger.info(`📝 Message received from member: ${displayName}`);
+  } catch (err) {
+      // fallback if the member isn't in the guild
+      member = message.author;
+      displayName = member.username;
+      logger.warn(`⚠️ Member not found in guild, using User object: ${member.tag}`);
+  }
 
   const parsed = parseWorkMessage(message.content);
   const content = message.content.trim().toLowerCase();
 
   if (content === 'pokaż raport') {
     try {
-        const filePath = await updateExcelFile(message.author, null, true);
-
+        const filePath = await updateExcelFile(member, null, { noAppend: true });
         await message.reply({ 
             content: 'Oto Twój aktualny raport.', files: [filePath] 
         });
@@ -109,7 +134,7 @@ Data* / Nazwa Zadania* / Klient lub Projekt* / Czas* / KM / Nr. Rejestracji
         Nr. Rejestracji ${parsed.registration}`);
     
     try {
-        const filePath = await updateExcelFile(message.author, parsed);
+        const filePath = await updateExcelFile(member, parsed);
 
         await message.reply({ 
             content: 'Twój raport został zaktualizowany.', files: [filePath] 
