@@ -59,9 +59,20 @@ async function runScheduledDMs() {
   logger.info('📧 Sending scheduled DMs...');
 
   const role = await guild.roles.fetch(ROLE_ID);
-  if (!role) return logger.error('❌ Role not found');
+  if (!role) {
+    logger.error('❌ Role not found');
+    return;
+  }
 
-  for (const member of role.members.values()) {
+  // Fetch members explicitly
+  const members = await guild.members.fetch({
+    withPresences: false,
+    force: true
+  });
+
+  const roleMembers = members.filter(m => m.roles.cache.has(ROLE_ID));
+
+  for (const member of roleMembers.values()) {
     if (member.user.bot) continue;
 
     try {
@@ -155,6 +166,15 @@ cron.schedule('0 16 * * 1-5', async () => {
     logger.info(`✅ Daily report for ${date} sent to supervisor.`);
   } catch (err) {
     logger.error('❌ Error sending daily report:', err);
+  }
+});
+
+cron.schedule('0 6 * * 1-5', async () => {
+  try {
+    await guild.members.fetch({ force: true });
+    logger.info('🔄 Daily member cache refresh completed');
+  } catch (err) {
+    logger.error('❌ Daily member fetch failed:', err);
   }
 });
 
