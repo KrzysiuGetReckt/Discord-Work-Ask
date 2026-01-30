@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, Events, Partials } = require('discord.js');
 // Helper functions
-const { isWithinWorkingHours, sleep } = require('./helperFunctions/isWithinWorkingHours');
+const { sleep } = require('./helperFunctions/sleep');
 const { parseWorkMessage } = require('./helperFunctions/parseWorkMessage');
 const { updateExcelFile, zipDailyReports } = require('./helperFunctions/updateExcelFile');
 const cron = require('node-cron');
@@ -20,7 +20,6 @@ const client = new Client({
 
 const {
   DISCORD_TOKEN,
-  INTERVAL_MS,
   GUILD_ID,
   ROLE_ID,
   DM_DELAY_MS,
@@ -47,15 +46,9 @@ client.once(Events.ClientReady, async () => {
     logger.error('❌ Error fetching all members:', err);
   }
 
-  setInterval(runScheduledDMs, Number(INTERVAL_MS));
 });
 
 async function runScheduledDMs() {
-  if (!isWithinWorkingHours()) {
-    logger.info('Outside working hours. Skipping DM send.');
-    return;
-  }
-
   logger.info('📧 Sending scheduled DMs...');
 
   const role = await guild.roles.fetch(ROLE_ID);
@@ -177,6 +170,15 @@ cron.schedule('0 6 * * 1-5', async () => {
     logger.error('❌ Daily member fetch failed:', err);
   }
 });
+
+cron.schedule('30 15 * * 1-5', async () => {
+    logger.info('⏰ 15:30 Poland reminder job triggered');
+    await runScheduledDMs();
+  },
+  {
+    timezone: 'Europe/Warsaw'
+  }
+);
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection:', reason);
