@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: discord-work-ask
+    volumes:
+      - ./:/discord-work-ask
+    env_file:
+      - ./.env
+    restart: unless-stopped
+
+  backup:
+    image: alpine:latest
+    container_name: backup_discord
+    volumes:
+      - ./:/discord-work-ask
+    entrypoint: >
+      sh -c "echo '0 0 1 * * /discord-work-ask/backup-scripts/backup_raports.sh' > /etc/crontabs/root &&
+             echo '0 1 1 * * /discord-work-ask/backup-scripts/backup_logs.sh' >> /etc/crontabs/root &&
+             crond -f -l 2"
