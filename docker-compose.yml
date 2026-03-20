@@ -15,7 +15,8 @@ services:
     container_name: backup_discord
     volumes:
       - ./:/discord-work-ask
+    restart: unless-stopped
     entrypoint: >
-      sh -c "echo '0 0 1 * * /discord-work-ask/backup-scripts/backup_raports.sh' > /etc/crontabs/root &&
-             echo '0 1 1 * * /discord-work-ask/backup-scripts/backup_logs.sh' >> /etc/crontabs/root &&
+      sh -c "echo '0 0 1 * * /discord-work-ask/backup-scripts/backup_raports.sh' > /etc/crontabs/root && \
+             echo '0 1 1 * * /discord-work-ask/backup-scripts/backup_logs.sh' >> /etc/crontabs/root && \
              crond -f -l 2"
