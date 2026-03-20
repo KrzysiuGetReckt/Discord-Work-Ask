@@ -6,6 +6,7 @@ services:
     container_name: discord-work-ask
     volumes:
       - ./:/discord-work-ask
+      - /discord-work-ask/node_modules
     env_file:
       - ./.env
     restart: unless-stopped
